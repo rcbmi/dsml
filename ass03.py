@@ -1,53 +1,102 @@
+# 1. Import required libraries
+import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
-import pandas as pd
-num_df=pd.read_csv("House Data.csv")
-print(num_df.head())
+# 2. Read the dataset
+# Change the file name if your CSV has a different name
+df = pd.read_csv("House Data.csv")
 
+# 3. See basic info (optional, just to understand the data)
+print("Dataset info:")
+print(df.info())
+print("\nFirst 5 rows:")
+print(df.head())
 
-print(num_df.describe())
+# 4. Select only numeric features (columns)
+numeric_df = df.select_dtypes(include=['number'])
 
+print("\nNumeric columns used for calculations:")
+print(numeric_df.columns)
 
-# standard deviation
-print(num_df.std(numeric_only=True))
+# 5. STANDARD DEVIATION for each numeric feature
+print("\nStandard Deviation for each feature:")
+print(numeric_df.std())
 
+# 6. VARIANCE for each numeric feature
+print("\nVariance for each feature:")
+print(numeric_df.var())
 
-# variance
-print(num_df.var(numeric_only=True))
+# 7. PERCENTILES (25th, 50th, 75th) for each numeric feature
+percentiles = [25, 50, 75]
 
+percentiles = numeric_df.quantile([0.25, 0.5, 0.75])
+print("\nPercentiles (25%, 50%, 75%):\n", percentiles)
 
-# 25th percentile
-df_valid=num_df.select_dtypes(include=['int64','float64'])
-print(df_valid.quantile(0.25,numeric_only=True))
-
-
-# 50th percentile
-
-print(df_valid.quantile(0.50,numeric_only=True))
-
-
-# 75th percentile
-
-print(df_valid.quantile(0.75,numeric_only=True))
-
-
-num_df = num_df.drop(columns=['Unnamed: 0'])
-
-for column in num_df.columns:
-    plt.figure(figsize=(10,6))
-    plt.hist(num_df[column].dropna())
-    plt.title(f"Histogram of {column}")
-    plt.xlabel(column)
+# 8. HISTOGRAM for each numeric feature
+for col in numeric_df.columns:
+    plt.figure()  # new figure for each feature
+    plt.hist(numeric_df[col].dropna(), bins=30)  # 30 bins, you can change
+    plt.title(f"Histogram of {col}")
+    plt.xlabel(col)
     plt.ylabel("Frequency")
-    plt.xticks(rotation=90)
+    plt.grid(True)  # optional, for better readability
     plt.show()
 
 
 
 
 
-
+# import matplotlib.pyplot as plt
 #
+# import pandas as pd
+# num_df=pd.read_csv("House Data.csv")
+# print(num_df.head())
+#
+#
+# print(num_df.describe())
+#
+#
+# # standard deviation
+# print(num_df.std(numeric_only=True))
+#
+#
+# # variance
+# print(num_df.var(numeric_only=True))
+#
+#
+# # 25th percentile
+# df_valid=num_df.select_dtypes(include=['int64','float64'])
+# print(df_valid.quantile(0.25,numeric_only=True))
+#
+#
+# # 50th percentile
+#
+# print(df_valid.quantile(0.50,numeric_only=True))
+#
+#
+# # 75th percentile
+#
+# print(df_valid.quantile(0.75,numeric_only=True))
+#
+#
+# num_df = num_df.drop(columns=['Unnamed: 0'])
+#
+# for column in num_df.columns:
+#     plt.figure(figsize=(10,6))
+#     plt.hist(num_df[column].dropna())
+#     plt.title(f"Histogram of {column}")
+#     plt.xlabel(column)
+#     plt.ylabel("Frequency")
+#     plt.xticks(rotation=90)
+#     plt.show()
+#
+
+
+
+
+
+
 # import pandas as pd
 # import matplotlib.pyplot as plt
 #
