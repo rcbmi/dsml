@@ -1,0 +1,1209 @@
+﻿
+1. Perform the following operations using Python on a data set : read data
+from different formats(like csv, xls),indexing and selecting data, sort data,
+describe attributes of data, checking data types of each column. (Use
+Titanic Dataset).
+
+import pandas as pd
+df = pd.read_csv('sample.csv')
+df.head()
+name = df['Name']
+subset = df[['Name','Age','Income']]
+first_five_rows = df.iloc[0:5]
+female_passengers = df.loc[df["Gender"] == "female"]
+sorted_by_age = df.sort_values(by="Age") 
+sorted_by_age_desc = df.sort_values(by="Age", ascending=False)
+sorted_multi = df.sort_values(by=["Income", "Age"])
+print(sorted_multi)
+print(df.describe())
+print(df.describe(include="all"))
+print(df.dtypes)
+print(df.info())
+
+
+2. Perform the following operations using Python on the Telecom_Churn
+dataset. Compute and display summary statistics for each feature available
+in the dataset using separate commands for each statistic. (e.g. minimum
+value, maximum value, mean, range, standard deviation, variance and
+percentiles).
+
+import pandas as pd
+# Load dataset
+df = pd.read_csv("Telecom_Churn.csv")
+
+print("First 5 rows of dataset:\n")
+print(df.head())
+
+numeric_df = df.select_dtypes(include=["int64", "float64"])
+
+print("\nNumeric Columns:")
+print(numeric_df.columns)
+
+print("\nMinimum value of each feature:")
+print(numeric_df.min())
+
+print("\nMaximum value of each feature:")
+print(numeric_df.max())
+
+print("\nMean of each feature:")
+print(numeric_df.mean())
+
+print("\nRange of each feature:")
+range_values = numeric_df.max() - numeric_df.min()
+print(range_values)
+
+print("\nStandard Deviation of each feature:")
+print(numeric_df.std())
+
+# -----------------------------
+# 6. Variance of each feature
+# -----------------------------
+print("\nVariance of each feature:")
+print(numeric_df.var())
+
+# -----------------------------
+# 7. Percentiles of each feature
+# -----------------------------
+print("\nPercentiles (25%, 50%, 75%):")
+print(numeric_df.quantile([0.25, 0.50, 0.75]))
+
+
+
+3. Perform the following operations using Python on the data set
+House_Price Prediction dataset. Compute standard deviation, variance and
+percentiles using separate commands, for each feature. Create a histogram
+for each feature in the dataset to illustrate the feature distributions.
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load dataset
+df = pd.read_csv("House Data.csv")
+
+# ==============================
+# 1. Data Preprocessing
+# ==============================
+
+# Handle missing values
+for col in df.columns:
+    if df[col].isnull().sum() > 0:
+        if df[col].dtype in ["int64", "float64"]:
+            df[col] = df[col].fillna(df[col].mean())
+        else:
+            df[col] = df[col].fillna(df[col].mode()[0])
+
+# Remove duplicates
+df = df.drop_duplicates()
+
+# Convert price to numeric if exists
+if "price" in df.columns:
+    df["price"] = df["price"].astype(str)
+    df["price"] = df["price"].str.replace(r"[^0-9]", "", regex=True)
+    df["price"] = pd.to_numeric(df["price"], errors="coerce")
+    df["price"] = df["price"].fillna(df["price"].mean())
+
+# ==============================
+# 2. Numeric Features Only
+# ==============================
+numeric_df = df.select_dtypes(include=["int64", "float64"])
+
+print("\nNumeric Features:")
+print(numeric_df.columns)
+
+# ==============================
+# 3. Standard Deviation
+# ==============================
+std_dev = numeric_df.std()
+print("\nStandard Deviation:\n", std_dev)
+
+# ==============================
+# 4. Variance
+# ==============================
+variance = numeric_df.var()
+print("\nVariance:\n", variance)
+
+# ==============================
+# 5. Percentiles
+# ==============================
+percentiles = numeric_df.quantile([0.25, 0.5, 0.75])
+print("\nPercentiles (25%, 50%, 75%):\n", percentiles)
+
+# ==============================
+# 6. Histogram Plots
+# ==============================
+for col in numeric_df.columns:
+    plt.figure()
+    plt.hist(numeric_df[col], bins=20)
+    plt.title(f"Histogram of {col}")
+    plt.xlabel(col)
+    plt.ylabel("Frequency")
+    plt.grid(True)
+    plt.show()
+
+# ==============================
+# Save preprocessed dataset
+# ==============================
+df.to_csv("house_cleaned.csv", index=False)
+print("\n✅ Preprocessing + Statistics + Plots Completed")
+
+4. Write a program to do: A dataset collected in a cosmetics shop showing
+details of customers and whether or not they responded to a special offer
+to buy a new lip-stick is shown in table below. (Implement step by step
+using commands - Dont use library) Use this dataset to build a decision
+tree, with Buys as the target variable, to help in buying lipsticks in the
+future. Find the root node of the decision tree.
+
+import pandas as pd
+import math
+
+# ---------------------------------------
+# 1. Load the dataset and drop Id column
+# ---------------------------------------
+df = pd.read_csv("Lipstick.csv")
+
+# Drop the Id column
+df = df.drop("Id", axis=1)
+
+# Convert DataFrame to list of dicts (for your ID3 code)
+data = df.to_dict(orient="records")
+
+target_attr = "Buys"
+
+# ---------------------------------------------------
+# 2. Helper: get the list of values of a column
+#    (using list-of-dicts 'data')
+# ---------------------------------------------------
+def get_column(data, attr):
+    return [row[attr] for row in data]
+
+# ---------------------------------------------------
+# 3. Compute entropy of a list of class labels
+#    Entropy(S) = - Σ p(c) * log2(p(c))
+# ---------------------------------------------------
+def entropy(class_values):
+    total = len(class_values)
+    # count frequency of each class
+    value_counts = {}
+    for v in class_values:
+        value_counts[v] = value_counts.get(v, 0) + 1
+
+    ent = 0.0
+    for count in value_counts.values():
+        p = count / total
+        ent -= p * math.log2(p)
+    return ent
+
+# ---------------------------------------------------
+# 4. Compute Information Gain of an attribute
+#
+#    IG(S, A) = Entropy(S) - Σ (|S_v| / |S|) * Entropy(S_v)
+#    where S_v are subsets where A = v
+# ---------------------------------------------------
+def information_gain(data, attr, target_attr):
+    # Entropy of the full dataset for target
+    total_entropy = entropy(get_column(data, target_attr))
+    total_len = len(data)
+
+    # Find all possible values of this attribute
+    values = set(get_column(data, attr))
+
+    # Compute weighted entropy after split
+    weighted_entropy = 0.0
+    for v in values:
+        # subset where attr == v
+        subset = [row for row in data if row[attr] == v]
+        subset_labels = get_column(subset, target_attr)
+        subset_entropy = entropy(subset_labels)
+        weight = len(subset) / total_len
+        weighted_entropy += weight * subset_entropy
+
+    # Information Gain
+    ig = total_entropy - weighted_entropy
+    return ig
+
+# ---------------------------------------------------
+# 5. Find the attribute with maximum information gain
+#    → This becomes the ROOT NODE of the decision tree.
+# ---------------------------------------------------
+def find_best_attribute(data, target_attr):
+    # All keys from first row
+    attributes = list(data[0].keys())
+    # remove target
+    attributes.remove(target_attr)
+
+    best_attr = None
+    best_ig = -1
+
+    print("Information Gain for each attribute:\n")
+    for attr in attributes:
+        ig = information_gain(data, attr, target_attr)
+        print(f"IG({attr}) = {ig:.4f}")
+        if ig > best_ig:
+            best_ig = ig
+            best_attr = attr
+
+    return best_attr, best_ig
+
+# ---------------------------------------------------
+# 6. Main: compute root node
+# ---------------------------------------------------
+best_attr, best_ig = find_best_attribute(data, target_attr)
+
+print("\n====================================")
+print(" ROOT NODE of the decision tree is:")
+print("  Attribute:", best_attr)
+print("  Information Gain:", best_ig)
+print("====================================")
+
+
+5) Write a program to do: A dataset collected in a cosmetics shop showing
+details of customers and whether or not they responded to a special offer
+to buy a new lip-stick is shown in table below. (Use library commands)
+According to the decision tree you have made from the previous training
+data set, what is the decision for the test data: [Age < 21, Income = Low,
+Gender = Female, Marital Status = Married]?
+
+6. Write a program to do: A dataset collected in a cosmetics shop showing
+details of customers and whether or not they responded to a special offer
+to buy a new lip-stick is shown in table below. (Use library commands)
+According to the decision tree you have made from the previous training
+data set, what is the decision for the test data: [Age > 35, Income =
+Medium, Gender = Female, Marital Status = Married]?
+
+7. Write a program to do: A dataset collected in a cosmetics shop showing
+details of customers and whether or not they responded to a special offer
+to buy a new lip-stick is shown in table below. (Use library commands)
+According to the decision tree you have made from the previous training
+data set, what is the decision for the test data: [Age > 35, Income =
+Medium, Gender = Female, Marital Status = Married]?
+
+8. Write a program to do: A dataset collected in a cosmetics shop showing
+details of customers and whether or not they responded to a special offer
+to buy a new lip-stick is shown in table below. (Use library commands)
+According to the decision tree you have made from the previous training
+data set, what is the decision for the test data: [Age = 21-35, Income = Low,
+Gender = Male, Marital Status = Married]?
+
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.tree import DecisionTreeClassifier
+
+
+
+
+data = {
+    'Age': ['<21','<21','21-35','21-35','>35','>35'],
+    'Income': ['High','Low','Medium','Low','High','Low'],
+    'Gender': ['Female','Female','Male','Female','Male','Female'],
+    'MaritalStatus': ['Single','Married','Single','Married','Single','Married'],
+    'Responds': ['Yes','No','Yes','Yes','No','No']
+}
+
+
+#feature an target
+df = pd.DataFrame(data)
+X = df[['Age','Income','Gender','MaritalStatus']].copy()
+y = df['Responds'].copy()
+
+
+#Encode the categorical data
+encoders = {}
+for column in X.columns:
+    le = LabelEncoder()
+    X.loc[:, column] = le.fit_transform(X[column])
+    encoders[column] = le
+
+
+#Encode Target
+target_encoder = LabelEncoder()
+y = target_encoder.fit_transform(y).ravel()
+
+
+#TRAINING THE DATA
+model = DecisionTreeClassifier(criterion='entropy', random_state=0)
+model.fit(X, y)
+
+
+#Test data #change this condition according to question
+test = pd.DataFrame([{
+    'Age': '21-35',
+    'Income': 'Low',
+    'Gender': 'Male',
+    'MaritalStatus': 'Married'
+}])
+#encoding for test data
+for column in test.columns:
+    test.loc[:,column] = encoders[column].transform(test[column])
+
+
+#make prediction
+pred = model.predict(test)[0]
+
+
+#reverse the encoded value
+decision = target_encoder.inverse_transform([pred])[0]
+
+
+print("Decision for the given test data:", decision)
+
+
+
+
+9. Write a program to do the following: You have given a collection of 8
+points. P1=[0.1,0.6] P2=[0.15,0.71] P3=[0.08,0.9] P4=[0.16, 0.85]
+P5=[0.2,0.3] P6=[0.25,0.5] P7=[0.24,0.1] P8=[0.3,0.2]. Perform the k-mean
+clustering with initial centroids as m1=P1 =Cluster#1=C1 and
+m2=P8=cluster#2=C2. Answer the following 1] Which cluster does P6
+belong to? 2] What is the population of a cluster around m2? 3] What is
+the updated value of m1 and m2?
+
+
+import numpy as np
+
+# ---------------------------
+# Given Points
+# ---------------------------
+points = np.array([
+    [0.1,  0.6],   # P1
+    [0.15, 0.71],  # P2
+    [0.08, 0.9],   # P3
+    [0.16, 0.85],  # P4
+    [0.2,  0.3],   # P5
+    [0.25, 0.5],   # P6
+    [0.24, 0.1],   # P7
+    [0.3,  0.2]    # P8
+])
+
+point_names = ['P1','P2','P3','P4','P5','P6','P7','P8']
+
+# ---------------------------
+# Initial Centroids
+# ---------------------------
+m1 = points[0].copy()   # P1
+m2 = points[7].copy()   # P8
+
+print("Initial M1:", m1)
+print("Initial M2:", m2)
+
+# ---------------------------
+# K-Means Iteration
+# ---------------------------
+while True:
+    distances_to_m1 = np.linalg.norm(points - m1, axis=1)
+    distances_to_m2 = np.linalg.norm(points - m2, axis=1)
+
+    cluster1_indices = np.where(distances_to_m1 < distances_to_m2)[0]
+    cluster2_indices = np.where(distances_to_m1 >= distances_to_m2)[0]
+
+    new_m1 = points[cluster1_indices].mean(axis=0)
+    new_m2 = points[cluster2_indices].mean(axis=0)
+
+    # Stop when centroids stop changing
+    if np.allclose(m1, new_m1) and np.allclose(m2, new_m2):
+        break
+
+    m1, m2 = new_m1, new_m2
+
+# ---------------------------
+# Final Clusters
+# ---------------------------
+print("\nFinal Clustering:")
+print("Cluster 1:", [point_names[i] for i in cluster1_indices])
+print("Cluster 2:", [point_names[i] for i in cluster2_indices])
+
+# ---------------------------
+# Question 1: Which cluster does P6 belong to?
+# ---------------------------
+p6_index = point_names.index("P6")
+
+if p6_index in cluster1_indices:
+    cluster_P6 = 1
+else:
+    cluster_P6 = 2
+
+print("\n1) P6 belongs to Cluster:", cluster_P6)
+
+# ---------------------------
+# Question 2: Population around m2
+# ---------------------------
+population_cluster2 = len(cluster2_indices)
+print("2) Population of cluster around m2 (Cluster 2):", population_cluster2)
+
+# ---------------------------
+# Question 3: Updated m1 and m2
+# ---------------------------
+print("\n3) Updated Centroids:")
+print("Updated m1:", m1)
+print("Updated m2:", m2)
+
+
+10. Write a program to do the following: You have given a collection of 8
+points. P1=[2, 10] P2=[2, 5] P3=[8, 4] P4=[5, 8] P5=[7,5] P6=[6, 4] P7=[1, 2]
+P8=[4, 9]. Perform the k-mean clustering with initial centroids as m1=P1
+=Cluster#1=C1 and m2=P4=cluster#2=C2, m3=P7 =Cluster#3=C3. Answer
+the following 1] Which cluster does P6 belong to? 2] What is the
+population of a cluster around m3? 3] What is the updated value of m1,
+m2, m3?
+import numpy as np
+
+points = np.array([
+    [2, 10],
+    [2, 5],
+    [8, 4],
+    [5, 8],
+    [7, 5],
+    [6, 4],
+    [1, 2],
+    [4, 9]
+])
+
+m1 = points[0]
+m2 = points[3]
+m3 = points[6]
+
+def euclidean_distance(point,centroid):
+    return np.sqrt(np.sum((point-centroid)**2))
+
+def k_mean(points,m1,m2,m3,max_iteration=10):
+    for iteration in range(max_iteration):
+        clusters = {1:[],2:[],3:[]}
+        for point in points:
+            dist1 = euclidean_distance(point,m1)
+            dist2 = euclidean_distance(point,m2)
+            dist3 = euclidean_distance(point,m3)
+            if dist1<dist2 and dist1<dist3 :
+                clusters[1].append(point)
+            elif dist2<dist3:
+                clusters[2].append(point)
+            else:
+                clusters[3].append(point)
+        new_m1 = np.mean(clusters[1],axis=0) if clusters[1] else m1
+        new_m2 = np.mean(clusters[2],axis=0) if clusters[2] else m2
+        new_m3 = np.mean(clusters[3],axis=0) if clusters[3] else m3
+
+        if np.allclose(new_m1,m1) and np.allclose(new_m2,m2) and np.allclose(new_m3,m3):
+            break
+        m1,m2,m3 = new_m1,new_m2,new_m3
+
+        return clusters,m1,m2,m3
+
+clusters,updated_m1,updated_m2,updated_m3 = k_mean(points,m1,m2,m3,15)
+
+p6_cluster = None
+p6 = points[5]
+
+for clusters_id,clusters_points in clusters.items():
+    for point in clusters_points:
+        if np.array_equal(p6,point):
+            p6_cluster  = clusters_id
+            break
+        if p6_cluster:
+            break
+
+# Question 2: What is the population of the cluster around m3?
+print(f"1] P6 belongs to Cluster: {p6_cluster}")
+population_m3 = len(clusters[3])
+print(f"2] Population of Cluster 3 (around m3): {population_m3}")
+
+# Question 3: What are the updated values of m1, m2, m3?
+print(f"3] Updated values:\n   m1: {updated_m1}\n   m2: {updated_m2}\n   m3: {updated_m3}")
+
+
+
+
+11)Use Iris flower dataset and perform following :
+1. List down the features and their types (e.g., numeric, nominal)
+available in the dataset. 2. Create a histogram for each feature in the
+dataset to illustrate the feature distributions.
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+
+
+iris = load_iris()
+
+
+df = pd.DataFrame(iris.data, columns=iris.feature_names)
+df['species'] = iris.target
+
+
+print("Iris dataset loaded successfully")
+
+
+#1 Feature and its types
+print("Feature and their types:\n")
+for col in df.columns:
+    print(f"{col} --> {df[col].dtype}")
+
+
+#2 plot histogram
+df.iloc[:, :4].hist(figsize=(10,8), bins=10, edgecolor='black')
+plt.suptitle("Histogram of that dataset", fontsize = 16)
+plt.show()
+
+
+
+
+
+12.Use Iris flower dataset and perform following :
+1. Create a box plot for each feature in the dataset.
+2. Identify and discuss distributions and identify outliers from them.
+
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+
+
+iris = load_iris()
+df = pd.DataFrame(iris.data, columns=iris.feature_names)
+df["species"] = iris.target
+
+
+print("Iris Dataset Loaded Successfully!\n")
+
+
+#1 create a boxplot
+
+
+plt.figure(figsize=(12,8))
+
+
+df.iloc[:,:4].boxplot()
+plt.title("Boxplots of iris Dataset feature")
+plt.ylabel("Value (cm)")
+# plt.xticks(rotation=0)
+
+
+plt.show()
+
+
+#2 outliers and stuff
+def find_outliers(series):
+    Q1 = series.quantile(0.25)
+    Q3 = series.quantile(0.75)
+
+
+    IQR = Q3-Q1
+    low = Q1 - 1.5*IQR
+    high = Q3 + 1.5*IQR
+
+
+    outliers = series[(series > high) | (series < low)]
+
+
+    return low,high,outliers
+
+
+for col in df.columns:
+    low,high,outliers = find_outliers(df[col])
+
+
+    print(f"Outliers in column : {col}")
+    print("Low value: ",low)
+    print("High value: ",high)
+    
+    if(len(outliers)<1) :
+        print("None")
+    else :
+        print("Outliers are: ",list(outliers))
+    print("------------------------")
+
+
+
+
+
+13)Use the covid_vaccine_statewise.csv dataset and perform the following
+analytics.
+a. Describe the dataset
+b. Number of persons state wise vaccinated for first dose in India
+c. Number of persons state wise vaccinated for second dose in India
+
+import pandas as pd
+df = pd.read_csv("covid_vaccine_statewise.csv.xls")
+
+
+print("a) describe dataset")
+print(df.describe(include='all'))
+# print("Columns present in this dataset:\n", df.columns)
+
+
+print("b) Statewise first dose vaccination Count")
+dose1_statewise = df.groupby('State')['First Dose Administered'].sum()
+print(dose1_statewise)
+
+
+print("c) statewise second dose vaccination count")
+dose2_statewise = df.groupby('State')['Second Dose Administered'].sum()
+print(dose2_statewise)
+
+
+
+
+
+14. Use the covid_vaccine_statewise.csv dataset and perform the following
+analytics.
+A. Describe the dataset.
+B. Number of Males vaccinated
+C.. Number of females vaccinated
+
+import pandas as pd
+df = pd.read_csv("covid_vaccine_statewise.csv")
+
+
+print("------- A) Dataset Description -------\n")
+print(df.describe(include='all'))
+
+
+male_vaccinated = df['Male(Individuals Vaccinated)'].sum()
+
+
+print("\n------- B) Total Males Vaccinated -------")
+print(male_vaccinated)
+
+
+female_vaccinated = df['Female(Individuals Vaccinated)'].sum()
+
+
+print("\n------- C) Total Females Vaccinated -------")
+print(female_vaccinated)
+
+
+
+
+
+15) Use the dataset 'titanic'. The dataset contains 891 rows and contains
+information about the passengers who boarded the unfortunate Titanic
+ship. Use the Seaborn library to see if we can find any patterns in the data.
+
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+titanic = pd.read_csv("Titanic.csv")
+
+
+plt.figure(figsize=(6,4))
+sns.countplot(data=titanic, x='Sex', hue='Survived')
+plt.title("Survival count by gender")
+plt.show()
+
+
+#Survival vs passenger class
+plt.figure(figsize=(6,4))
+sns.countplot(data=titanic, x='Pclass', hue='Survived')
+plt.title("Survival count by passenger class")
+plt.show()
+
+
+#Age Distribution
+plt.figure(figsize=(7,5))
+sns.histplot(titanic['Age'].dropna(), bins=30, kde=True)
+plt.title("Age Distribution of Passengers")
+plt.show()
+
+
+
+
+16) Use the inbuilt dataset 'titanic'. The dataset contains 891 rows and
+contains information about the passengers who boarded the unfortunate
+Titanic ship. Write a code to check how the price of the ticket (column
+name: 'fare') for each passenger is distributed by plotting a histogram.
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+titanic = pd.read_csv(r"C:\Users\AYUSH\Desktop\dsml-main\dsml-main\Datasets\Titanic.csv")
+print("DataSet Loaded confirmation", len(titanic))
+
+
+titanic['Fare'].dropna().hist(figsize=(8,5),bins=30, edgecolor='black')
+plt.title("Distribution of ticket fare")
+plt.xlabel("fare")
+plt.ylabel("Number of passenger")
+plt.show()
+
+
+
+17) Compute Accuracy, Error rate, Precision, Recall for following confusion
+matrix ( Use formula for each)
+
+# Confusion Matrix Values
+TP = 1
+FP = 1
+FN = 8
+TN = 90
+
+
+# Accuracy
+accuracy = (TP + TN) / (TP + TN + FP + FN)
+
+
+# Error Rate
+error_rate = (FP + FN) / (TP + TN + FP + FN)
+
+
+# Precision
+precision = TP / (TP + FP)
+
+
+# Recall
+recall = TP / (TP + FN)
+
+
+print("Accuracy =", accuracy)
+print("Error Rate =", error_rate)
+print("Precision =", precision)
+print("Recall =", recall)
+
+
+
+18)Use House_Price prediction dataset. Provide summary statistics (mean,
+median, minimum, maximum, standard deviation) of variables (categorical
+vs quantitative) such as- For example, if categorical variable is age groups
+and quantitative variable is income, then provide summary statistics of
+income grouped by the age groups.
+
+import pandas as pd
+
+df = pd.read_csv("House Data.csv")
+
+# Clean price column
+df['price'] = df['price'].astype(str)
+df['price'] = df['price'].str.replace(r'[^0-9]', '', regex=True)
+
+df['numeric_price'] = pd.to_numeric(df['price'], errors='coerce')
+
+# Remove rows where price could not be converted
+df = df.dropna(subset=['numeric_price'])
+
+# Define categorical and quantitative variables
+categorical = 'district'       # Example categorical
+quantitative = 'numeric_price' # Example quantitative
+
+# Group and calculate statistics
+values = df.groupby(categorical)[quantitative].agg([
+    'count',
+    'mean',
+    'median',
+    'min',
+    'max',
+    'std'
+])
+
+print(values)
+
+
+
+
+
+19) Write a Python program to display some basic statistical details like
+percentile, mean, standard deviation etc (Use python and pandas
+commands) the species of ‘Iris-setosa’, ‘Iris-versicolor’ and ‘Iris-versicolor’
+of iris.csv dataset.
+import pandas as pd
+
+
+# Load iris dataset
+df = pd.read_csv("iris.csv")
+
+
+# Filter for the required species
+species_list = ['Iris-setosa', 'Iris-versicolor', 'Iris-virginica']
+
+
+# Display basic statistical details for each species
+for species in species_list:
+    print(f"\n\n===== Statistical Summary for {species} =====")
+    
+    # Filter rows of this species
+    species_df = df[df['species'] == species]
+    
+    # Describe gives count, mean, std, min, percentiles, max
+    print(species_df.describe())
+
+
+
+
+
+20)Write a program to cluster a set of points using K-means for IRIS
+dataset. Consider, K=3, clusters. Consider Euclidean distance as the
+distance measure. Randomly initialize a cluster mean as one of the data
+points. Iterate at least for 10 iterations. After iterations are over, print the
+final cluster means for each of the clusters.
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+
+
+points = sns.load_dataset('iris')
+points = points.select_dtypes(include='number')
+
+
+K = 3
+max_itr = 10
+
+
+np.random.seed(0)
+initial_v = np.random.choice(len(points), K, replace=False)
+
+
+m1 = points.iloc[initial_v[0]].values
+m2 = points.iloc[initial_v[1]].values
+m3 = points.iloc[initial_v[2]].values
+
+
+for itr in range(max_itr):
+
+
+   dm1 = np.linalg.norm(points-m1,axis=1)
+   dm2 = np.linalg.norm(points-m2,axis=1)
+   dm3 = np.linalg.norm(points-m3,axis=1)
+
+
+   c1i = []
+   c2i = []
+   c3i = []
+
+
+   for i in range(len(points)):
+       d1 = dm1[i]
+       d2 = dm2[i]
+       d3 = dm3[i]
+
+
+       smallest = min(d1,d2,d3)
+
+
+       if smallest == d1:
+           c1i.append(i)
+       elif smallest == d2:
+           c2i.append(i)
+       else:
+           c3i.append(i)
+
+
+   m1 = points.iloc[c1i].mean(axis=0).values
+   m2 = points.iloc[c2i].mean(axis=0).values
+   m3 = points.iloc[c3i].mean(axis=0).values
+
+
+print(f"M1 : {m1}")
+print(f"M2 : {m2}")
+print(f"M3 : {m3}")
+
+
+21)Write a program to cluster a set of points using K-means for IRIS
+dataset. Consider, K=4, clusters. Consider Euclidean distance as the
+distance measure. Randomly initialize a cluster mean as one of the data
+points. Iterate at least for 10 iterations. After iterations are over, print the
+final cluster means for each of the clusters. # add one more point and changes
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+
+# Load Iris dataset
+points = sns.load_dataset('iris')
+
+# Take only numerical columns
+points = points.select_dtypes(include='number')
+
+# Add one more point manually
+new_point = pd.DataFrame([[5.0, 3.5, 1.5, 0.3]], 
+                         columns=points.columns)
+
+points = pd.concat([points, new_point], ignore_index=True)
+
+# Number of clusters
+K = 4
+max_itr = 10
+
+# Random initialization
+np.random.seed(0)
+initial_v = np.random.choice(len(points), K, replace=False)
+
+# Initial cluster centroids
+m1 = points.iloc[initial_v[0]].values
+m2 = points.iloc[initial_v[1]].values
+m3 = points.iloc[initial_v[2]].values
+m4 = points.iloc[initial_v[3]].values
+
+# K-means algorithm loop
+for itr in range(max_itr):
+
+    dm1 = np.linalg.norm(points - m1, axis=1)
+    dm2 = np.linalg.norm(points - m2, axis=1)
+    dm3 = np.linalg.norm(points - m3, axis=1)
+    dm4 = np.linalg.norm(points - m4, axis=1)
+
+    c1i, c2i, c3i, c4i = [], [], [], []
+
+    for i in range(len(points)):
+        d1 = dm1[i]
+        d2 = dm2[i]
+        d3 = dm3[i]
+        d4 = dm4[i]
+
+        smallest = min(d1, d2, d3, d4)
+
+        if smallest == d1:
+            c1i.append(i)
+        elif smallest == d2:
+            c2i.append(i)
+        elif smallest == d3:
+            c3i.append(i)
+        else:
+            c4i.append(i)
+
+    # Update centroids
+    if len(c1i) > 0:
+        m1 = points.iloc[c1i].mean(axis=0).values
+    if len(c2i) > 0:
+        m2 = points.iloc[c2i].mean(axis=0).values
+    if len(c3i) > 0:
+        m3 = points.iloc[c3i].mean(axis=0).values
+    if len(c4i) > 0:
+        m4 = points.iloc[c4i].mean(axis=0).values
+
+# Print final centroids
+print("Final Cluster Means after 10 iterations:\n")
+print(f"M1: {m1}")
+print(f"M2: {m2}")
+print(f"M3: {m3}")
+print(f"M4: {m4}")
+
+
+
+
+22)
+# Confusion Matrix Values
+TP = 90      # True Positive
+FN = 210     # False Negative
+FP = 140     # False Positive
+TN = 9560    # True Negative
+
+
+# Accuracy
+accuracy = (TP + TN) / (TP + TN + FP + FN)
+
+
+# Error Rate
+error_rate = 1 - accuracy
+
+
+# Precision
+precision = TP / (TP + FP)
+
+
+# Recall (Sensitivity)
+recall = TP / (TP + FN)
+
+
+print("Accuracy:", round(accuracy, 4))
+print("Error Rate:", round(error_rate, 4))
+print("Precision:", round(precision, 4))
+print("Recall:", round(recall, 4))
+
+
+
+
+
+23)With reference to Table , obtain the Frequency table for the
+attribute age. From the frequency table you have obtained, calculate the
+information gain of the frequency table while splitting on Age. (Use step
+by step Python/Pandas commands)
+
+import pandas as pd
+import numpy as np
+data = {
+    "Age": [
+        "Young","Young","Middle","Old","Old","Old",
+        "Middle","Young","Young","Old","Young","Middle",
+        "Middle","Old"
+    ],
+    "Income": [
+        "High","High","High","Medium","Low","Low",
+        "Low","Medium","Low","Medium","Medium","Medium",
+        "High","Medium"
+    ],
+    "Married": [
+        "No","No","No","No","Yes","Yes",
+        "Yes","No","Yes","Yes","Yes","No",
+        "Yes","No"
+    ],
+    "Health": [
+        "Fair","Good","Fair","Fair","Fair","Good",
+        "Good","Fair","Fair","Fair","Good","Good",
+        "Fair","Good"
+    ],
+    "Class": [
+        "No","No","Yes","Yes","Yes","No",
+        "Yes","No","Yes","Yes","Yes","Yes",
+        "Yes","No"
+    ]
+}
+
+
+# Load CSV
+df = pd.DataFrame(data)   # change filename if needed
+
+
+# ---------- FREQUENCY TABLE FOR AGE ----------
+freq_age = df['Age'].value_counts()
+print("Frequency Table (Age):")
+print(freq_age)
+
+
+# ---------- ENTROPY FUNCTION ----------
+def entropy(col):
+    p = col.value_counts(normalize=True)
+    return -(p * np.log2(p)).sum()
+
+
+# ---------- ENTROPY BEFORE SPLIT ----------
+H_before = entropy(df['Class'])
+print(H_before)
+
+
+# ---------- ENTROPY AFTER SPLIT ON AGE ----------
+H_after = 0
+for age, sub in df.groupby('Age'):
+    H_after += (len(sub)/len(df)) * entropy(sub['Class'])
+
+
+# ---------- INFORMATION GAIN ----------
+IG = H_before - H_after
+print("\nInformation Gain (Age):", round(IG,4))
+
+
+
+
+
+
+24) Perform the following operations using Python on a suitable data set,
+counting unique values of data, format of each column, converting variable
+data type (e.g. from long to short, vice versa), identifying missing values
+and filling in the missing values.
+
+import pandas as pd
+
+# Load dataset
+df = pd.read_csv("Titanic.csv")
+
+# 1. Count unique values of each column
+unique_counts = df.nunique()
+print("Unique values in each column:\n")
+print(unique_counts)
+
+# 2. Data types of each column
+print("\nData types of each column:\n")
+print(df.dtypes)
+
+# 3. Identify columns with missing values
+print("\nColumns with missing values:")
+missing = df.isnull().sum()
+print(missing[missing > 0])
+
+# 4. Fill missing values
+for col in df.columns:
+    if df[col].isnull().sum() > 0:
+        # If column is numeric -> fill with mean
+        if df[col].dtype in ['int64', 'float64']:
+            df[col] = df[col].fillna(df[col].mean())
+        # If column is categorical -> fill with mode
+        else:
+            df[col] = df[col].fillna(df[col].mode()[0])
+
+# 5. Check again after filling
+print("\nMissing values AFTER filling:\n")
+print(df.isnull().sum())
+
+# 6. Datatype Conversions (Correct Titanic Columns)
+
+# Convert 'age' from float to int (long -> short)
+df['Age'] = df['Age'].astype('int32')
+print("\nUpdated dtype for age:", df['Age'].dtype)
+
+# Convert 'fare' from float -> float64 (just for demonstration)
+df['fare'] = df['Fare'].astype('float64')
+print("Updated dtype for fare:", df['fare'].dtype)
+
+# Convert 'survived' to string
+df['survived'] = df['Survived'].astype('string')
+print("Updated dtype for survived:", df['survived'].dtype)
+
+# Save cleaned dataset
+df.to_csv("final_output.csv", index=False)
+print("\nFinal cleaned file saved as: final_output.csv")
+
+
+
+25)25. Perform Data Cleaning, Data transformation using Python on any data
+set.
+
+import pandas as pd
+
+# Load Titanic dataset
+df = pd.read_csv("Titanic.csv")
+
+# =========================
+# 1. Data Cleaning
+# =========================
+
+# Fill missing values
+df["Age"] = df["Age"].fillna(df["Age"].mean())
+df["Fare"] = df["Fare"].fillna(df["Fare"].median())
+df["Embarked"] = df["Embarked"].fillna(df["Embarked"].mode()[0])
+
+# Cabin has too many missing values → replace with "Unknown"
+df["Cabin"] = df["Cabin"].fillna("Unknown")
+
+# Remove duplicate rows
+df = df.drop_duplicates()
+
+# Clean text columns
+df["Name"] = df["Name"].str.strip()
+df["Ticket"] = df["Ticket"].str.strip()
+df["Cabin"] = df["Cabin"].str.strip()
+
+# Convert categorical text to lowercase
+df["Embarked"] = df["Embarked"].str.lower()
+df["Sex"] = df["Sex"].str.lower()
+
+# =========================
+# 2. Data Transformation
+# =========================
+
+# Convert Sex to numerical
+df["Sex"] = df["Sex"].map({"male": 1, "female": 0})
+
+# Create new column: Survival Status
+df["Survival_Status"] = df["Survived"].apply(lambda x: "Survived" if x == 1 else "Not Survived")
+
+# Create Age Group column
+df["Age_Group"] = pd.cut(
+    df["Age"],
+    bins=[0, 12, 20, 35, 60, 100],
+    labels=["Child", "Teen", "Young Adult", "Adult", "Senior"]
+)
+
+# Normalize Age and Fare
+df["Normalized_Age"] = (df["Age"] - df["Age"].min()) / (df["Age"].max() - df["Age"].min())
+df["Normalized_Fare"] = (df["Fare"] - df["Fare"].min()) / (df["Fare"].max() - df["Fare"].min())
+
+# Rename Fare column
+df.rename(columns={"Fare": "Ticket_Fare"}, inplace=True)
+
+# =========================
+# Final Output
+# =========================
+print("✅ Titanic Data Cleaning & Transformation Completed\n")
+print(df.head())
+
+# Save cleaned dataset
+df.to_csv("Titanic_Cleaned_Transformed.csv", index=False)
